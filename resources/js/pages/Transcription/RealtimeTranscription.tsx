@@ -45,6 +45,8 @@ export default function RealtimeTranscription() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioBufferRef = useRef<Blob[]>([]);
+  const [chunkInterval, setChunkInterval] = useState(10); // 10秒間隔に変更
 
   const activeRecorder = recordingMode === 'screen' ? screenRecorder : audioRecorder;
 
@@ -61,8 +63,8 @@ export default function RealtimeTranscription() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const sendChunkForTranscription = async (audioBlob: Blob) => {
-    console.log('Sending chunk for transcription, size:', audioBlob.size);
+  const sendChunkForTranscription = async (audioBlob: Blob, isOverlapping = false) => {
+    console.log('Sending chunk for transcription, size:', audioBlob.size, 'overlapping:', isOverlapping);
     
     const formData = new FormData();
     formData.append('audio_file', audioBlob, `chunk_${Date.now()}.wav`);
@@ -82,18 +84,47 @@ export default function RealtimeTranscription() {
       const data = await response.json();
 
       if (data.success && data.text.trim()) {
-        const newChunk: TranscriptionChunk = {
-          text: data.text.trim(),
-          timestamp: Date.now(),
-          confidence: data.metadata?.confidence
-        };
+        const newText = data.text.trim();
         
-        setTranscriptionChunks(prev => [...prev, newChunk]);
-        console.log('Transcription chunk received:', newChunk.text);
+        // 重複している部分を検出して削除
+        const processedText = isOverlapping ? removeDuplicateText(newText) : newText;
+        
+        if (processedText) {
+          const newChunk: TranscriptionChunk = {
+            text: processedText,
+            timestamp: Date.now(),
+            confidence: data.metadata?.confidence
+          };
+          
+          setTranscriptionChunks(prev => [...prev, newChunk]);
+          console.log('Transcription chunk received:', processedText);
+        }
       }
     } catch (err) {
       console.error('Chunk transcription error:', err);
     }
+  };
+
+  // 重複テキストを除去する関数
+  const removeDuplicateText = (newText: string): string => {
+    const lastChunks = transcriptionChunks.slice(-2); // 最後の2チャンクをチェック
+    if (lastChunks.length === 0) return newText;
+    
+    const lastText = lastChunks.map(chunk => chunk.text).join(' ');
+    const words = newText.split(' ');
+    const lastWords = lastText.split(' ');
+    
+    // 最後の文の一部が重複している場合は削除
+    let startIndex = 0;
+    for (let i = Math.min(words.length, lastWords.length); i > 0; i--) {
+      const newSlice = words.slice(0, i).join(' ');
+      if (lastText.includes(newSlice)) {
+        startIndex = i;
+        break;
+      }
+    }
+    
+    return words.slice(startIndex).join(' ');
   };
 
   const handleStartRealTimeRecording = async () => {
@@ -140,6 +171,7 @@ export default function RealtimeTranscription() {
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
+          audioBufferRef.current.push(event.data);
         }
       };
 
@@ -147,19 +179,30 @@ export default function RealtimeTranscription() {
         if (chunksRef.current.length > 0) {
           const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
           const blob = new Blob(chunksRef.current, { type: mimeType });
-          sendChunkForTranscription(blob);
+          
+          // オーバーラップ用のより長いチャンクも作成（文脈保持のため）
+          const overlapBlob = audioBufferRef.current.length > 2 
+            ? new Blob(audioBufferRef.current.slice(-3), { type: mimeType })
+            : blob;
+          
+          sendChunkForTranscription(overlapBlob, audioBufferRef.current.length > 2);
           chunksRef.current = [];
+          
+          // バッファサイズを制限（メモリ使用量を抑制）
+          if (audioBufferRef.current.length > 5) {
+            audioBufferRef.current = audioBufferRef.current.slice(-3);
+          }
         }
       };
 
-      // 3秒間隔で音声チャンクを送信
+      // 10秒間隔で音声チャンクを送信（文脈をより保持）
       mediaRecorderRef.current.start();
       intervalRef.current = setInterval(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
           mediaRecorderRef.current.start();
         }
-      }, 3000);
+      }, chunkInterval * 1000);
 
       setIsTranscribing(true);
       setConnectionStatus('connected');
@@ -247,10 +290,10 @@ export default function RealtimeTranscription() {
                 リアルタイム文字起こし
               </h1>
               <p className="text-muted-foreground">
-                録音中にリアルタイムで文字起こしを表示します（3秒間隔）
+                録音中にリアルタイムで文字起こしを表示します（{chunkInterval}秒間隔）
               </p>
               <div className="mt-2 text-sm bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg">
-                <strong>⚡ リアルタイム機能:</strong> 音声を3秒間隔で処理してリアルタイム表示
+                <strong>⚡ リアルタイム機能:</strong> 音声を{chunkInterval}秒間隔で処理、文脈を保持しながらリアルタイム表示
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -404,7 +447,7 @@ export default function RealtimeTranscription() {
                       <span className="font-medium text-blue-800">リアルタイム録音中</span>
                     </div>
                     <p className="text-sm text-blue-600">
-                      音声を3秒間隔で処理してリアルタイム文字起こし中...
+                      音声を{chunkInterval}秒間隔で処理してリアルタイム文字起こし中...
                     </p>
                   </div>
                 )}
