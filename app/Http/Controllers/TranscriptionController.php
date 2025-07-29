@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\TranscriptionService;
+use App\Services\DeepgramTranscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class TranscriptionController extends Controller
 {
-    protected TranscriptionService $transcriptionService;
+    protected DeepgramTranscriptionService $transcriptionService;
     
-    public function __construct(TranscriptionService $transcriptionService)
+    public function __construct(DeepgramTranscriptionService $transcriptionService)
     {
         $this->transcriptionService = $transcriptionService;
     }
@@ -29,13 +29,19 @@ class TranscriptionController extends Controller
      */
     public function transcribe(Request $request)
     {
+        \Log::info('Transcription request received', [
+            'has_file' => $request->hasFile('audio_file'),
+            'file' => $request->file('audio_file'),
+            'model' => $request->input('model'),
+        ]);
+        
         $request->validate([
-            'audio_file' => 'required|file|max:25600', // 25MB
-            'model' => 'sometimes|string|in:tiny,base,small,medium,large'
+            'audio_file' => 'required|file|max:5120', // 5MB (fits within PHP 8MB limit)
+            'model' => 'sometimes|string|in:nova-2,nova,enhanced,base'
         ]);
         
         $file = $request->file('audio_file');
-        $model = $request->input('model', 'base');
+        $model = $request->input('model', 'nova-2');
         
         // ファイル形式チェック
         if (!$this->transcriptionService->isSupportedFormat($file->getMimeType())) {
@@ -47,9 +53,10 @@ class TranscriptionController extends Controller
         
         // ファイルサイズチェック
         if (!$this->transcriptionService->isValidFileSize($file->getSize())) {
+            $maxSize = config('app.env') === 'production' ? '500MB' : '5MB';
             return response()->json([
                 'success' => false,
-                'error' => 'ファイルサイズが25MBを超えています。'
+                'error' => "ファイルサイズが{$maxSize}を超えています。"
             ], 400);
         }
         

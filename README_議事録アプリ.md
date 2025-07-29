@@ -1,39 +1,46 @@
 # 議事録アプリ - セットアップガイド
 
-OpenAI Whisperを使用した音声文字起こし機能を持つ議事録作成アプリです。
+**Deepgram API**を使用した高速・高精度な音声文字起こし機能を持つ議事録作成アプリです。
 
 ## 機能
 
-- **音声・動画ファイルのアップロード**: MP3, WAV, MP4など様々な形式に対応
-- **自動文字起こし**: OpenAI Whisperによる高精度な音声認識
+### 📁 ファイルアップロード機能
+- **音声・動画ファイルのアップロード**: MP3, WAV, MP4など様々な形式に対応（最大500MB）
+- **高速文字起こし**: Deepgram APIによる高精度・高速な音声認識
 - **タイムスタンプ付き出力**: 発言時間付きで結果を表示
-- **複数モデル対応**: 精度と速度のバランスを選択可能
+- **複数モデル対応**: Nova-2（最新）、Nova、Enhanced、Baseから選択可能
+- **話者分離**: 複数話者の識別機能
+- **料金表示**: リアルタイムコスト計算（約0.65円/分）
 - **結果ダウンロード**: テキストファイルとして保存可能
+
+### 🎙️ ライブ議事録機能（NEW!）
+- **リアルタイム録音**: 会議中に音声を直接録音
+- **画面共有録音**: Google Meet、Teams、Zoom、Discord、Slack、Skypeの音声をキャプチャ
+- **マイク録音**: 従来の音声録音方式
+- **会議URL管理**: 参加する会議のURLを管理
+- **即座に文字起こし**: 録音停止と同時に自動で文字起こし開始
 
 ## 必要な環境
 
 ### システム要件
 - PHP 8.2以上
-- Python 3.8以上
 - Node.js 18以上
 - Composer
-- FFmpeg（音声・動画ファイル処理用）
+- **Deepgram APIキー**（[deepgram.com](https://deepgram.com)で取得）
 
-### Python依存関係
+### API設定
+1. [Deepgram](https://deepgram.com)でアカウント作成
+2. APIキーを取得（無料クレジット$200付き）
+3. `.env`ファイルに設定：
 ```bash
-# OpenAI Whisperのインストール
-pip install openai-whisper
-
-# FFmpegのインストール（Ubuntu/Debian）
-sudo apt update
-sudo apt install ffmpeg
-
-# FFmpegのインストール（macOS）
-brew install ffmpeg
-
-# FFmpegのインストール（Windows）
-# https://ffmpeg.org/download.html からダウンロード
+DEEPGRAM_API_KEY=your_api_key_here
 ```
+
+### 💰 料金について
+- **Deepgram API**: $0.0043/分（約0.65円/分）
+- **初回$200無料クレジット**で約46,000分（約770時間）無料利用可能
+- **従量課金制**: 使った分だけ課金
+- **OpenAIより30%安価**
 
 ## セットアップ手順
 
@@ -55,16 +62,18 @@ php artisan key:generate
 php artisan migrate
 ```
 
-### 2. ストレージの設定
+### 2. API設定
+`.env`ファイルを編集してDeepgram APIキーを設定：
+```bash
+# .env
+DEEPGRAM_API_KEY=your_deepgram_api_key_here
+```
+
+### 3. ストレージの設定
 ```bash
 # ストレージディレクトリの作成とパーミッション設定
 php artisan storage:link
 chmod -R 775 storage/
-```
-
-### 3. Pythonスクリプトの実行権限設定
-```bash
-chmod +x scripts/transcribe.py
 ```
 
 ### 4. 設定ファイルの確認
@@ -88,20 +97,21 @@ chmod +x scripts/transcribe.py
 composer run dev
 ```
 
+## 📁 ファイルアップロード機能
+
 ### 2. 議事録作成ページへアクセス
 ブラウザで `http://localhost:8000/transcription` にアクセス
 
 ### 3. 音声ファイルのアップロード
 - ファイルをドラッグ&ドロップまたは「ファイルを選択」ボタンから選択
 - サポート形式：MP3, WAV, MP4, M4A, OGG, WebM, FLAC, MOV, AVI
-- ファイルサイズ制限：25MB
+- ファイルサイズ制限：500MB
 
-### 4. Whisperモデルの選択
-- **tiny**: 高速・軽量（精度は低い）
-- **base**: バランス型（推奨）
-- **small**: 高精度（やや重い）
-- **medium**: より高精度（重い）
-- **large**: 最高精度（非常に重い）
+### 4. Deepgramモデルの選択
+- **nova-2**: 最新・最高精度（推奨）
+- **nova**: 高精度・高速
+- **enhanced**: 汎用高精度モデル
+- **base**: 基本モデル
 
 ### 5. 文字起こしの実行
 「文字起こし開始」ボタンをクリックして処理を開始
@@ -110,30 +120,74 @@ composer run dev
 - 全文とタイムスタンプ付きセグメントを表示
 - 「ダウンロード」ボタンでテキストファイルとして保存
 
+## 🎙️ ライブ議事録機能
+
+### 1. ライブ議事録ページへアクセス
+ブラウザで `http://localhost:8000/transcription/live` にアクセス
+
+### 2. 会議URLの入力（任意）
+- 参加する会議のURLを入力
+- 「開く」ボタンで新しいタブで会議を起動
+
+### 3. 録音方法の選択
+
+#### 🖥️ 画面共有録音（推奨）
+1. 「画面共有」を選択
+2. 「録音開始」ボタンをクリック
+3. ブラウザの画面共有ダイアログで：
+   - 「タブを共有」を選択
+   - 会議が開かれているタブを選択
+   - **「システム音声を共有」または「タブの音声を共有」をチェック**
+4. 「共有」ボタンをクリック
+5. 会議終了時に「録音停止」ボタンをクリック
+
+#### 🎤 マイク録音
+1. 「マイク」を選択
+2. 「録音開始」ボタンをクリック
+3. マイクアクセスを許可
+4. 会議終了時に「録音停止」ボタンをクリック
+
+### 4. 自動文字起こし
+- 録音停止と同時に自動で文字起こしが開始されます
+- 結果は画面右側にリアルタイムで表示されます
+
+### 5. 結果の保存
+- 「ダウンロード」ボタンで議事録をテキストファイルとして保存
+
+## 🔧 対応会議プラットフォーム
+
+### 完全対応（画面共有録音）
+- ✅ **Google Meet** - `meet.google.com`
+- ✅ **Microsoft Teams** - `teams.microsoft.com`
+- ✅ **Zoom** - `zoom.us`
+- ✅ **Discord** - `discord.com`
+- ✅ **Slack** - `slack.com`
+- ✅ **Skype** - `skype.com`
+
+### 使用時の注意事項
+1. **Chrome、Firefox、Edge推奨** - Safari は一部機能に制限あり
+2. **音声共有を忘れずに** - 画面共有時に「システム音声」のチェックを忘れがち
+3. **プライバシー** - すべての処理はローカルで実行（外部送信なし）
+4. **ファイルサイズ** - 長時間録音は25MB制限に注意
+
 ## トラブルシューティング
 
-### Python/Whisperが見つからない場合
+### APIキーエラー
 ```bash
-# Pythonのパス確認
-which python3
+# .env ファイルを確認
+cat .env | grep DEEPGRAM_API_KEY
 
-# Whisperの動作確認
-python3 -c "import whisper; print('Whisper installed successfully')"
-```
-
-### FFmpegが見つからない場合
-```bash
-# FFmpegのインストール確認
-ffmpeg -version
+# Laravel設定キャッシュクリア
+php artisan config:clear
 ```
 
 ### ファイルアップロードエラー
 `php.ini` の設定を確認：
 ```ini
-upload_max_filesize = 25M
-post_max_size = 25M
-max_execution_time = 300
-memory_limit = 512M
+upload_max_filesize = 500M
+post_max_size = 500M
+max_execution_time = 600
+memory_limit = 1G
 ```
 
 ### 権限エラー
@@ -143,22 +197,32 @@ sudo chown -R www-data:www-data storage/
 sudo chmod -R 775 storage/
 ```
 
+### APIレスポンスエラー
+- **401 Unauthorized**: APIキーが無効
+- **429 Rate Limited**: リクエスト制限に達した
+- **500 Internal Error**: Deepgramサーバーエラー（一時的な問題）
+
 ## 開発者向け情報
 
 ### ファイル構成
 ```
 app/
 ├── Http/Controllers/TranscriptionController.php  # コントローラー
-├── Services/TranscriptionService.php             # サービスクラス
+├── Services/DeepgramTranscriptionService.php     # Deepgram APIサービス
 
 resources/js/pages/Transcription/
-├── Index.tsx                                     # メインUI
+├── Index.tsx                                     # ファイルアップロードUI
+├── LiveRecording.tsx                             # ライブ録音UI
 
-scripts/
-├── transcribe.py                                 # Python文字起こしスクリプト
+resources/js/hooks/
+├── use-screen-recorder.tsx                       # 画面共有録音フック
+├── use-audio-recorder.tsx                        # マイク録音フック
 
 routes/
 ├── web.php                                       # ルート定義
+
+config/
+├── services.php                                  # API設定
 ```
 
 ### API エンドポイント
@@ -166,16 +230,32 @@ routes/
 - `POST /transcription` - 文字起こし実行
 
 ### カスタマイズ
-- モデルの追加：`TranscriptionController.php` のバリデーションルールを変更
-- UI の調整：`resources/js/pages/Transcription/Index.tsx` を編集
-- 処理時間制限：`TranscriptionService.php` の `shell_exec` タイムアウト設定
+- **モデルの追加**: `TranscriptionController.php` のバリデーションルールを変更
+- **UI調整**: `resources/js/pages/Transcription/` 内のファイルを編集
+- **API設定**: `DeepgramTranscriptionService.php` でパラメータ調整
+- **料金計算**: `calculateCost()` メソッドで価格設定変更
 
-## 費用について
+### Deepgram API機能
+- **Smart Format**: 自動句読点・大文字化
+- **Diarization**: 話者分離
+- **Language Detection**: 自動言語検出
+- **Confidence Score**: 信頼度スコア
+- **Custom Vocabulary**: カスタム語彙対応
 
-このアプリケーションは完全にローカルで動作するため、追加の費用は発生しません：
+## 🎉 完成！
 
-- **OpenAI Whisper**: オープンソース、無料
-- **処理**: ローカル環境で実行
-- **ストレージ**: ローカルファイルシステムを使用
+**Deepgram API**による高速・高精度・低コストな議事録アプリが完成しました：
 
-ただし、初回のモデルダウンロード時にインターネット接続が必要です。
+### ✅ メリット
+- **セットアップ簡単**: APIキーのみで動作
+- **高速処理**: 数秒で文字起こし完了
+- **高精度**: 最新のAI音声認識
+- **低コスト**: OpenAIより30%安価
+- **スケーラブル**: 同時複数ユーザー対応
+- **メンテナンス不要**: サーバー管理不要
+
+### 🚀 今すぐ始める
+1. [Deepgram](https://deepgram.com)でAPIキー取得（$200無料クレジット）
+2. `.env`にAPIキー設定
+3. `composer run dev`でサーバー起動
+4. ブラウザで議事録作成開始！

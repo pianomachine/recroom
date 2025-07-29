@@ -18,8 +18,12 @@ Route::middleware([
     })->name('dashboard');
     
     Route::get('transcription', [TranscriptionController::class, 'index'])->name('transcription');
+    Route::get('transcription/live', function () {
+        return Inertia::render('Transcription/LiveRecording');
+    })->name('transcription.live');
     Route::post('transcription', [TranscriptionController::class, 'transcribe'])->name('transcription.create');
 });
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

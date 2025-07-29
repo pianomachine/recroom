@@ -41,4 +41,9 @@ return [
         'redirect_url' => env('WORKOS_REDIRECT_URL'),
     ],
 
+    'deepgram' => [
+        'api_key' => env('DEEPGRAM_API_KEY'),
+        'api_url' => env('DEEPGRAM_URL', 'https://api.deepgram.com'),
+    ],
+
 ];

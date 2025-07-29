@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { Upload, FileAudio, Play, Pause, Download } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Upload, FileAudio, Play, Pause, Download, Radio } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface TranscriptionResult {
@@ -20,11 +20,17 @@ interface TranscriptionResult {
   }>;
   filename: string;
   model: string;
+  metadata?: {
+    duration: number;
+    cost: number;
+    confidence: number;
+    provider: string;
+  };
 }
 
 export default function TranscriptionIndex() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [model, setModel] = useState('base');
+  const [model, setModel] = useState('nova-2');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [result, setResult] = useState<TranscriptionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +44,10 @@ export default function TranscriptionIndex() {
   ];
 
   const modelDescriptions = {
-    tiny: '高速・軽量（精度は低い）',
-    base: 'バランス型（推奨）',
-    small: '高精度（やや重い）',
-    medium: 'より高精度（重い）',
-    large: '最高精度（非常に重い）'
+    'nova-2': '最新・最高精度（推奨）',
+    'nova': '高精度・高速',
+    'enhanced': '汎用高精度モデル',
+    'base': '基本モデル'
   };
 
   const handleFileSelect = (file: File) => {
@@ -51,8 +56,8 @@ export default function TranscriptionIndex() {
       return;
     }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setError('ファイルサイズが25MBを超えています。');
+    if (file.size > 5 * 1024 * 1024) {
+      setError('ファイルサイズが5MBを超えています。より小さなファイルをお試しください。');
       return;
     }
 
@@ -104,7 +109,9 @@ export default function TranscriptionIndex() {
         body: formData,
         headers: {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'X-Requested-With': 'XMLHttpRequest',
         },
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
@@ -149,10 +156,23 @@ export default function TranscriptionIndex() {
       
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">議事録作成</h1>
-          <p className="text-muted-foreground">
-            音声・動画ファイルをアップロードして自動で文字起こしを行います
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">議事録作成</h1>
+              <p className="text-muted-foreground">
+                音声・動画ファイルをアップロードして自動で文字起こしを行います
+              </p>
+              <div className="mt-2 text-sm bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                <strong>💰 料金:</strong> Deepgram API使用 - 約0.65円/分（$0.0043/分）
+              </div>
+            </div>
+            <Link href="/transcription/live">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Radio className="h-4 w-4" />
+                ライブ議事録
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6">
@@ -164,7 +184,7 @@ export default function TranscriptionIndex() {
                 ファイルアップロード
               </CardTitle>
               <CardDescription>
-                MP3, WAV, MP4などの音声・動画ファイル（最大25MB）
+                MP3, WAV, MP4などの音声・動画ファイル（最大5MB）
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -214,7 +234,7 @@ export default function TranscriptionIndex() {
               {selectedFile && (
                 <div className="mt-4 flex gap-4">
                   <div className="flex-1">
-                    <Label htmlFor="model">Whisperモデル</Label>
+                    <Label htmlFor="model">Deepgramモデル</Label>
                     <Select value={model} onValueChange={setModel}>
                       <SelectTrigger>
                         <SelectValue />
@@ -259,6 +279,9 @@ export default function TranscriptionIndex() {
                     <CardTitle>文字起こし結果</CardTitle>
                     <CardDescription>
                       ファイル: {result.filename} | 言語: {result.language} | モデル: {result.model}
+                      {result.metadata && (
+                        <span> | 時間: {Math.round(result.metadata.duration)}秒 | 料金: ${result.metadata.cost}</span>
+                      )}
                     </CardDescription>
                   </div>
                   <Button onClick={downloadTranscript} variant="outline" size="sm">
