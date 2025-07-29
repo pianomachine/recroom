@@ -43,6 +43,7 @@ export default function LiveRecording() {
   const [recordingMode, setRecordingMode] = useState<RecordingMode>('screen');
   const [result, setResult] = useState<TranscriptionResult | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const screenRecorder = useScreenRecorder();
   const audioRecorder = useAudioRecorder();
@@ -63,18 +64,28 @@ export default function LiveRecording() {
   };
 
   const handleStartRecording = async () => {
+    setError(null);
+    setResult(null);
+    console.log('Starting recording with mode:', recordingMode);
     await activeRecorder.startRecording();
   };
 
   const handleStopRecording = async () => {
+    console.log('Stopping recording...');
     const blob = await activeRecorder.stopRecording();
     
+    console.log('Recording stopped, blob:', blob);
+    console.log('Blob size:', blob?.size, 'bytes');
+    
     if (blob) {
+      console.log('Starting transcription...');
       setIsTranscribing(true);
       
       const formData = new FormData();
       formData.append('audio_file', blob, `recording_${Date.now()}.webm`);
       formData.append('model', model);
+
+      console.log('FormData created, sending to /transcription');
 
       try {
         const response = await fetch('/transcription', {
@@ -87,18 +98,27 @@ export default function LiveRecording() {
           credentials: 'same-origin',
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (data.success) {
+          console.log('Transcription successful:', data);
           setResult(data);
+          setError(null);
         } else {
           console.error('Transcription error:', data.error);
+          setError(data.error || '文字起こし処理でエラーが発生しました。');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Upload error:', err);
+        setError('アップロードエラーが発生しました: ' + err.message);
       } finally {
         setIsTranscribing(false);
       }
+    } else {
+      console.warn('No blob received from recorder');
+      setError('録音データが取得できませんでした。音声共有が有効になっているか確認してください。');
     }
   };
 
@@ -259,6 +279,13 @@ export default function LiveRecording() {
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     {activeRecorder.error}
+                  </Alert>
+                )}
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    {error}
                   </Alert>
                 )}
 
