@@ -44,10 +44,22 @@ class TranscriptionController extends Controller
         $model = $request->input('model', 'nova-2');
         
         // ファイル形式チェック
-        if (!$this->transcriptionService->isSupportedFormat($file->getMimeType())) {
+        $detectedMimeType = $file->getMimeType();
+        \Log::info('File MIME type check', [
+            'detected_mime_type' => $detectedMimeType,
+            'original_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize()
+        ]);
+        
+        if (!$this->transcriptionService->isSupportedFormat($detectedMimeType)) {
+            \Log::warning('Unsupported file format', [
+                'mime_type' => $detectedMimeType,
+                'original_name' => $file->getClientOriginalName()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'error' => 'サポートされていないファイル形式です。MP3, WAV, MP4などの音声・動画ファイルをアップロードしてください。'
+                'error' => "サポートされていないファイル形式です。検出されたタイプ: {$detectedMimeType}。MP3, WAV, MP4、WebMなどの音声・動画ファイルをアップロードしてください。"
             ], 400);
         }
         

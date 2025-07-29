@@ -214,8 +214,21 @@ class DeepgramTranscriptionService
             'video/x-msvideo',      // avi
         ];
         
-        // 音声ファイルは優先的にサポート
+        Log::info('MIME type support check', [
+            'input_mime_type' => $mimeType,
+            'preferred_formats' => $preferredFormats,
+            'video_formats' => $videoFormats
+        ]);
+        
+        // 音声ファイルは優先的にサポート（完全一致）
         if (in_array($mimeType, $preferredFormats)) {
+            Log::info('MIME type supported as audio format', ['mime_type' => $mimeType]);
+            return true;
+        }
+        
+        // WebM形式の部分一致もチェック（codecs付きの場合）
+        if (str_starts_with($mimeType, 'audio/webm')) {
+            Log::info('WebM audio format detected (partial match)', ['mime_type' => $mimeType]);
             return true;
         }
         
@@ -226,6 +239,11 @@ class DeepgramTranscriptionService
             ]);
             return true;
         }
+        
+        Log::warning('MIME type not supported', [
+            'mime_type' => $mimeType,
+            'available_formats' => array_merge($preferredFormats, $videoFormats)
+        ]);
         
         return false;
     }
