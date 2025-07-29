@@ -76,13 +76,15 @@ export default function LiveRecording() {
     
     console.log('Recording stopped, blob:', blob);
     console.log('Blob size:', blob?.size, 'bytes');
+    console.log('Blob type:', blob?.type);
     
     if (blob) {
       console.log('Starting transcription...');
       setIsTranscribing(true);
       
       const formData = new FormData();
-      formData.append('audio_file', blob, `recording_${Date.now()}.webm`);
+      // WebMをWAVとして送信（Deepgram互換性のため）
+      formData.append('audio_file', blob, `recording_${Date.now()}.wav`);
       formData.append('model', model);
 
       console.log('FormData created, sending to /transcription');

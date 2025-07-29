@@ -203,7 +203,8 @@ class DeepgramTranscriptionService
             'audio/mp4',            // m4a
             'audio/x-m4a',          // m4a
             'audio/ogg',            // ogg
-            'audio/webm',           // webm
+            'audio/webm',           // webm (ライブ録音用)
+            'audio/webm;codecs=opus', // webm opus (ライブ録音用)
             'audio/flac',           // flac
         ];
         

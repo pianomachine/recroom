@@ -47,10 +47,16 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
       chunksRef.current = [];
 
-      // MediaRecorderの設定
-      const options: MediaRecorderOptions = {
-        mimeType: 'audio/webm;codecs=opus',
-      };
+      // MediaRecorderの設定（WAV優先、フォールバック付き）
+      let options: MediaRecorderOptions = {};
+      
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        options.mimeType = 'audio/wav';
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options.mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options.mimeType = 'audio/webm';
+      }
 
       // 音声のみのストリームを作成
       const audioStream = new MediaStream(audioTracks);
@@ -107,7 +113,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
       }
 
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        // 実際に使用されたMIMEタイプを取得
+        const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         chunksRef.current = [];
         setIsRecording(false);
         resolve(blob);
