@@ -158,13 +158,13 @@ export default function LiveRecording() {
 
   return (
     <AppLayout>
-      <Head title="ライブ議事録作成" />
+      <Head title="議事録作成" />
       
       <div className="container mx-auto py-8 px-4 max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">ライブ議事録作成</h1>
+          <h1 className="text-3xl font-bold mb-2">議事録作成</h1>
           <p className="text-muted-foreground">
-            会議の音声をリアルタイムで録音・文字起こしします
+            会議の音声を録音して、自動で文字起こしを行います
           </p>
         </div>
 
@@ -293,9 +293,14 @@ export default function LiveRecording() {
 
                 {activeRecorder.isRecording && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                      <span className="font-medium text-red-800">録音中</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span className="font-medium text-red-800">録音中</span>
+                      </div>
+                      <div className="text-sm text-red-600 bg-white/50 px-2 py-1 rounded">
+                        録音を停止すると、文字起こしが表示されます
+                      </div>
                     </div>
                     {'duration' in activeRecorder && (
                       <div className="flex items-center gap-2 text-sm text-red-700">
@@ -325,8 +330,17 @@ export default function LiveRecording() {
                       className="flex-1"
                       size="lg"
                     >
-                      <Square className="h-5 w-5 mr-2" />
-                      {isTranscribing ? '文字起こし中...' : '録音停止'}
+                      {isTranscribing ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          処理中...
+                        </>
+                      ) : (
+                        <>
+                          <Square className="h-5 w-5 mr-2" />
+                          録音停止
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -347,6 +361,32 @@ export default function LiveRecording() {
 
           {/* 右側: 結果表示 */}
           <div className="space-y-6">
+            {/* 文字起こし処理中の表示 */}
+            {isTranscribing && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Mic className="h-6 w-6 text-blue-500" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-blue-700">文字起こし処理中</h3>
+                    <p className="text-muted-foreground text-sm">
+                      録音された音声をDeepgram AIで解析しています...<br />
+                      少々お待ちください
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {result && (
               <Card>
                 <CardHeader>
@@ -401,7 +441,7 @@ export default function LiveRecording() {
               </Card>
             )}
 
-            {!result && !activeRecorder.isRecording && (
+            {!result && !activeRecorder.isRecording && !isTranscribing && (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                   <Volume2 className="h-16 w-16 text-muted-foreground mb-4" />

@@ -15,16 +15,11 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: '議事録作成',
-        href: '/transcription',
-        icon: Mic,
-    },
-    {
-        title: 'ライブ議事録',
         href: '/transcription/live',
         icon: Radio,
     },
     {
-        title: 'リアルタイム文字起こし',
+        title: 'ライブ議事録',
         href: '/transcription/realtime',
         icon: Zap,
     },

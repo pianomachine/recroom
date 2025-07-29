@@ -305,7 +305,7 @@ export default function RealtimeTranscription() {
 
   return (
     <AppLayout>
-      <Head title="リアルタイム文字起こし" />
+      <Head title="ライブ議事録" />
       
       <div className="container mx-auto py-8 px-4 max-w-6xl">
         <div className="mb-8">
@@ -313,13 +313,13 @@ export default function RealtimeTranscription() {
             <div>
               <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
                 <Zap className="h-8 w-8 text-blue-500" />
-                リアルタイム文字起こし
+                ライブ議事録
               </h1>
               <p className="text-muted-foreground">
                 録音中にリアルタイムで文字起こしを表示します（{chunkInterval}秒間隔）
               </p>
               <div className="mt-2 text-sm bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg">
-                <strong>⚡ リアルタイム機能:</strong> 音声を{chunkInterval}秒間隔で処理、重複を除去してリアルタイム表示
+                <strong>⚡ ライブ機能:</strong> 音声を{chunkInterval}秒間隔で処理、重複を除去してリアルタイム表示
               </div>
             </div>
             <div className="flex items-center gap-2">

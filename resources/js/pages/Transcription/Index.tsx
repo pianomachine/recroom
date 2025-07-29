@@ -167,16 +167,10 @@ export default function TranscriptionIndex() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Link href="/transcription/live">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Radio className="h-4 w-4" />
-                  ライブ議事録
-                </Button>
-              </Link>
               <Link href="/transcription/realtime">
                 <Button variant="outline" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  リアルタイム
+                  ライブ議事録
                 </Button>
               </Link>
             </div>
