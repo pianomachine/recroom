@@ -7,7 +7,7 @@ import { Alert } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import { Upload, FileAudio, Play, Pause, Download, Radio } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause, Download, Radio, Zap } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 interface TranscriptionResult {
@@ -166,12 +166,20 @@ export default function TranscriptionIndex() {
                 <strong>💰 料金:</strong> Deepgram API使用 - 約0.65円/分（$0.0043/分）
               </div>
             </div>
-            <Link href="/transcription/live">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Radio className="h-4 w-4" />
-                ライブ議事録
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link href="/transcription/live">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Radio className="h-4 w-4" />
+                  ライブ議事録
+                </Button>
+              </Link>
+              <Link href="/transcription/realtime">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  リアルタイム
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 

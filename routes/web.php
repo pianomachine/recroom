@@ -21,6 +21,9 @@ Route::middleware([
     Route::get('transcription/live', function () {
         return Inertia::render('Transcription/LiveRecording');
     })->name('transcription.live');
+    Route::get('transcription/realtime', function () {
+        return Inertia::render('Transcription/RealtimeTranscription');
+    })->name('transcription.realtime');
     Route::post('transcription', [TranscriptionController::class, 'transcribe'])->name('transcription.create');
 });
 

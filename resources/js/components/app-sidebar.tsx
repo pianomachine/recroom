@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Mic, Radio } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Mic, Radio, Zap } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -22,6 +22,11 @@ const mainNavItems: NavItem[] = [
         title: 'ライブ議事録',
         href: '/transcription/live',
         icon: Radio,
+    },
+    {
+        title: 'リアルタイム文字起こし',
+        href: '/transcription/realtime',
+        icon: Zap,
     },
 ];
 
