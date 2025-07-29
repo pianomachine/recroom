@@ -9,10 +9,6 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-// 一時的な認証なしルート（議事録機能テスト用）
-Route::get('/test', [TranscriptionController::class, 'index'])->name('test.transcription');
-Route::post('/test', [TranscriptionController::class, 'transcribe'])->name('test.transcribe');
-
 Route::middleware([
     'auth',
     ValidateSessionWithWorkOS::class,
