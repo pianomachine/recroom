@@ -45,22 +45,38 @@ class TranscriptionController extends Controller
         
         // ファイル形式チェック
         $detectedMimeType = $file->getMimeType();
+        $originalName = $file->getClientOriginalName();
+        $fileExtension = pathinfo($originalName, PATHINFO_EXTENSION);
+        
         \Log::info('File MIME type check', [
             'detected_mime_type' => $detectedMimeType,
-            'original_name' => $file->getClientOriginalName(),
+            'original_name' => $originalName,
+            'file_extension' => $fileExtension,
             'file_size' => $file->getSize()
         ]);
         
-        if (!$this->transcriptionService->isSupportedFormat($detectedMimeType)) {
+        // MIMEタイプまたはファイル拡張子での判定
+        $isSupportedByMime = $this->transcriptionService->isSupportedFormat($detectedMimeType);
+        $isSupportedByExtension = in_array(strtolower($fileExtension), ['wav', 'mp3', 'mp4', 'm4a', 'webm', 'ogg', 'flac']);
+        
+        if (!$isSupportedByMime && !$isSupportedByExtension) {
             \Log::warning('Unsupported file format', [
                 'mime_type' => $detectedMimeType,
-                'original_name' => $file->getClientOriginalName()
+                'extension' => $fileExtension,
+                'original_name' => $originalName
             ]);
             
             return response()->json([
                 'success' => false,
-                'error' => "サポートされていないファイル形式です。検出されたタイプ: {$detectedMimeType}。MP3, WAV, MP4、WebMなどの音声・動画ファイルをアップロードしてください。"
+                'error' => "サポートされていないファイル形式です。検出されたタイプ: {$detectedMimeType}、拡張子: {$fileExtension}。MP3, WAV, MP4、WebMなどの音声・動画ファイルをアップロードしてください。"
             ], 400);
+        }
+        
+        if (!$isSupportedByMime && $isSupportedByExtension) {
+            \Log::info('File accepted by extension despite MIME type mismatch', [
+                'mime_type' => $detectedMimeType,
+                'extension' => $fileExtension
+            ]);
         }
         
         // ファイルサイズチェック

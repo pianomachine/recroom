@@ -212,6 +212,7 @@ class DeepgramTranscriptionService
             'video/mp4',            // mp4 (音声抽出が必要な場合あり)
             'video/quicktime',      // mov
             'video/x-msvideo',      // avi
+            'video/webm',           // webm (実際には音声だが、PHPがvideo/webmとして検出する場合あり)
         ];
         
         Log::info('MIME type support check', [
